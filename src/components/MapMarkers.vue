@@ -102,7 +102,7 @@
   <div 
     v-if="hoveredHospital"
     class="absolute bg-white rounded-lg shadow-lg p-3 text-sm max-w-xs z-20"
-    style="top: 10px; left: 10px;"
+    style="bottom: 10px; right: 10px;"
   >
     <div class="font-bold text-gray-800">{{ hoveredHospital.name }}</div>
     <div class="text-gray-600">{{ hoveredHospital.address }}</div>
@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
 import { fromLonLat } from 'ol/proj'
@@ -121,8 +121,28 @@ import { hospitals } from '../data/hospitals'
 import hospitalIcon from '../assets/hospital-icon.png'
 
 const props = defineProps({
-  map: Object
+  map: Object,
+  filteredHospitals: {
+    type: Array,
+    default: () => []
+  },
 })
+
+watch(() => props.filteredHospitals, (newHospitals) => {
+  if (vectorSource) {
+    // Clear existing features
+    vectorSource.clear()
+    
+    // Add new filtered hospitals
+    newHospitals.forEach(hospital => {
+      const marker = new Feature({
+        geometry: new Point(fromLonLat([hospital.lon, hospital.lat])),
+        hospital: hospital
+      })
+      vectorSource.addFeature(marker)
+    })
+  }
+}, { deep: true })
 
 const drawerRef = ref(null)
 const selectedHospital = ref(null)
